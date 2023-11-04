@@ -8,8 +8,6 @@ import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
-import org.lwjgl.Sys;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
@@ -18,6 +16,8 @@ import java.util.Scanner;
 
 public class Gui
 {
+    public static Gui theGui;
+
     @SubscribeEvent
     public void onWorldJoin(PlayerEvent.PlayerLoggedInEvent event)
     {
@@ -110,6 +110,12 @@ public class Gui
 
         if(Math.floor(timeInDays) > lastMilestone)
             displayMilestoneTitle();
+    }
+
+    public void moveGui(int x, int y)
+    {
+        posX = x;
+        posY = y;
     }
 
     private void calcElapsedTime()
