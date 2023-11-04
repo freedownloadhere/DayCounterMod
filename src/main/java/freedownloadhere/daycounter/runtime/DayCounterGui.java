@@ -8,15 +8,15 @@ import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+import org.lwjgl.opengl.GL11;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
-import java.time.Instant;
 import java.util.Scanner;
 
-public class Gui
+public class DayCounterGui
 {
-    public static Gui theGui;
+    public static DayCounterGui theGui;
 
     @SubscribeEvent
     public void onWorldJoin(PlayerEvent.PlayerLoggedInEvent event)
@@ -25,13 +25,12 @@ public class Gui
             return;
 
         System.out.println("Joined the world!\n");
-        lastEpoch = Instant.now().getEpochSecond();
         try
         {
             File file = new File("daycounter.txt");
             Scanner fileScan = new Scanner(file);
-            secondsElapsed = fileScan.nextLong();
-            lastMilestone = fileScan.nextLong();
+            secondsElapsed = fileScan.nextInt();
+            lastRecordedDay = fileScan.nextInt();
         }
         catch (FileNotFoundException e)
         {
@@ -52,7 +51,7 @@ public class Gui
         try
         {
             FileWriter writer = new FileWriter("daycounter.txt");
-            writer.write(secondsElapsed + " " + lastMilestone);
+            writer.write(secondsElapsed + " " + lastRecordedDay);
             writer.close();
         }
         catch(java.io.IOException e)
@@ -66,6 +65,8 @@ public class Gui
     {
         if (event.phase == TickEvent.Phase.END)
         {
+            tickCounter++;
+
             if (ClientProxy.keyBindings[0].isPressed())
             {
                 showOnScreen = !showOnScreen;
@@ -76,12 +77,13 @@ public class Gui
 
             if (ClientProxy.keyBindings[1].isPressed())
             {
-                secondsElapsed = 0;
-                lastMilestone = 0;
+                /*secondsElapsed = 0;
+                currentDay = 0;
                 timeInDays = 0;
                 Minecraft.getMinecraft().thePlayer.addChatComponentMessage(
                         new ChatComponentText("\u00a77The day counter has been \u00a76\u00a7lreset!")
-                );
+                );*/
+                secondsElapsed += 120;
             }
 
             if (ClientProxy.keyBindings[2].isPressed())
@@ -102,14 +104,82 @@ public class Gui
 
         if(!isPaused)
             calcElapsedTime();
-        else
-            lastEpoch = Instant.now().getEpochSecond();
 
         if(showOnScreen)
             displayElapsedTime();
 
-        if(Math.floor(timeInDays) > lastMilestone)
-            displayMilestoneTitle();
+        determineCurrentDay();
+
+        if(milestoneTitleTicks > 0)
+            displayMilestoneTitle(
+                    event.resolution.getScaledWidth(),
+                    event.resolution.getScaledHeight() - 30
+            );
+    }
+
+    private void calcElapsedTime()
+    {
+        int secondsToAdd = tickCounter / 20;
+        if(secondsToAdd > 0)
+        {
+            tickCounter %= 20;
+            secondsElapsed += secondsToAdd;
+        }
+    }
+
+    private void displayElapsedTime()
+    {
+        String currentDay = "Day " + this.lastRecordedDay;
+
+        long secondsUntilNextDay = DAY_LENGTH_SECONDS - (secondsElapsed % DAY_LENGTH_SECONDS);
+        String displayedMin = (secondsUntilNextDay / 60 < 10 ? "0" : "") + secondsUntilNextDay / 60;
+        String displayedSec = (secondsUntilNextDay % 60 < 10 ? "0" : "") + secondsUntilNextDay % 60;
+
+        String extraInfo = (isPaused ? "\u00a77(Paused) " : "") +  displayedMin + ":" + displayedSec;
+
+        GL11.glPushMatrix();
+        GL11.glScalef(1.5f, 1.5f, 1.f);
+        Minecraft.getMinecraft().fontRendererObj.drawString(currentDay, posX, posY, color);
+        GL11.glPopMatrix();
+        Minecraft.getMinecraft().fontRendererObj.drawString(extraInfo, posX + 5, posY + 20, color);
+    }
+
+    private void determineCurrentDay()
+    {
+        int currentDay = secondsElapsed / DAY_LENGTH_SECONDS;
+        if(currentDay > lastRecordedDay)
+        {
+            Minecraft.getMinecraft().theWorld.playSound(
+                    Minecraft.getMinecraft().thePlayer.posX,
+                    Minecraft.getMinecraft().thePlayer.posY,
+                    Minecraft.getMinecraft().thePlayer.posZ,
+                    "random.levelup",
+                    100,
+                    1,
+                    false
+            );
+
+            milestoneTitleTicks = 100;
+            lastRecordedDay = currentDay;
+        }
+    }
+
+    private void displayMilestoneTitle(int width, int height)
+    {
+        milestoneTitleTicks--;
+
+        final float xScale = 3.f, yScale = 3.f;
+
+        GL11.glPushMatrix();
+        GL11.glScalef(xScale, yScale, 1.f);
+        Minecraft.getMinecraft().ingameGUI.drawCenteredString(
+                Minecraft.getMinecraft().fontRendererObj,
+                "Day " + lastRecordedDay + " reached",
+                width / (int)(2 * xScale),
+                height / (int)(2 * yScale),
+                color
+        );
+        GL11.glPopMatrix();
     }
 
     public void moveGui(int x, int y)
@@ -118,60 +188,15 @@ public class Gui
         posY = y;
     }
 
-    private void calcElapsedTime()
-    {
-        long timeNow = Instant.now().getEpochSecond();
-        if(lastEpoch < timeNow)
-        {
-            secondsElapsed += (timeNow - lastEpoch);
-            lastEpoch = timeNow;
-        }
-
-        timeInDays = (secondsElapsed * 1.0 / DAY_LENGTH_SECONDS);
-    }
-
-    private void displayElapsedTime()
-    {
-        double truncatedTimeInDays = Math.floor(timeInDays * 100) / 100;
-        String timeElapsed =
-                "\u00a7fTime in days: " +
-                (truncatedTimeInDays - Math.floor(truncatedTimeInDays) == 0 ? "\u00a7a\u00a7l" : "\u00a7l") +
-                truncatedTimeInDays +
-                " days" +
-                (isPaused ? " \u00a73\u00a7l(Paused)" : "");
-
-        Minecraft.getMinecraft().fontRendererObj.drawString(timeElapsed, posX, posY, color);
-    }
-
-    private void displayMilestoneTitle()
-    {
-        lastMilestone = (long)Math.floor(timeInDays);
-
-        Minecraft.getMinecraft().theWorld.playSound(
-                Minecraft.getMinecraft().thePlayer.posX,
-                Minecraft.getMinecraft().thePlayer.posY,
-                Minecraft.getMinecraft().thePlayer.posZ,
-                "random.levelup",
-                100,
-                1,
-                false
-        );
-
-        Minecraft.getMinecraft().ingameGUI.displayTitle(
-                "\u00a7fDay \u00a76\u00a7l" + lastMilestone + " \u00a7freached!",
-                "test",
-                0,
-                10,
-                0
-        );
-    }
-
-    private int posX = 10, posY = 10, color = 0xffffff;
+    private int posX = 10, posY = 10, color = 0xffffffff;
     private boolean showOnScreen = true;
+
     private boolean isPaused = false;
-    private long lastEpoch = 0;
-    private long secondsElapsed = 0;
-    private long lastMilestone = 0;
-    private double timeInDays;
+    private int secondsElapsed = 0;
+    private int lastRecordedDay = 0;
+
+    private int tickCounter = 0;
+    private int milestoneTitleTicks = 0;
+
     private static final int DAY_LENGTH_SECONDS = 1200;
 }

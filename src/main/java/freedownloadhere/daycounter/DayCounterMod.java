@@ -1,9 +1,7 @@
 package freedownloadhere.daycounter;
 
 import freedownloadhere.daycounter.proxy.CommonProxy;
-import freedownloadhere.daycounter.runtime.Gui;
-import freedownloadhere.daycounter.runtime.GuiCommands;
-import net.minecraftforge.client.ClientCommandHandler;
+import freedownloadhere.daycounter.runtime.DayCounterGui;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
@@ -20,15 +18,15 @@ public class DayCounterMod
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event)
     {
-        Gui.theGui = new Gui();
-        MinecraftForge.EVENT_BUS.register(Gui.theGui);
+        DayCounterGui.theGui = new DayCounterGui();
+        MinecraftForge.EVENT_BUS.register(DayCounterGui.theGui);
     }
 
     @Mod.EventHandler
     public void init(FMLInitializationEvent event)
     {
         proxy.init();
-        ClientCommandHandler.instance.registerCommand(new GuiCommands());
+        //ClientCommandHandler.instance.registerCommand(new GuiCommands());
     }
 
     @Mod.EventHandler

@@ -2,3 +2,6 @@ key.daycounter.togglegui=Toggle GUI
 key.daycounter.resettime=Reset Time
 key.daycounter.pausetime=Pause Time
 key.categories.daycounter.gui=Day Counter Mod
+exception.daycounter.movedaycountergui.invalidargnum=Invalid number of arguments. Expected two integers.
+exception.daycounter.movedaycountergui.invalidargtype=Invalid argument type. Expected two integers.
+exception.daycounter.movedaycountergui.illegalargs=The arguments' value is illegal. Must stay between 0 and the window's width / height.
