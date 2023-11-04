@@ -65,7 +65,8 @@ public class DayCounterGui
     {
         if (event.phase == TickEvent.Phase.END)
         {
-            tickCounter++;
+            if(!isPaused)
+                tickCounter++;
 
             if (ClientProxy.keyBindings[0].isPressed())
             {
@@ -135,7 +136,7 @@ public class DayCounterGui
         String displayedMin = (secondsUntilNextDay / 60 < 10 ? "0" : "") + secondsUntilNextDay / 60;
         String displayedSec = (secondsUntilNextDay % 60 < 10 ? "0" : "") + secondsUntilNextDay % 60;
 
-        String extraInfo = (isPaused ? "\u00a77(Paused) " : "") +  displayedMin + ":" + displayedSec;
+        String extraInfo = "\u00a7l" + (isPaused ? "\u00a77(Paused) " : "") + displayedMin + ":" + displayedSec;
 
         GL11.glPushMatrix();
         GL11.glScalef(1.5f, 1.5f, 1.f);
@@ -159,7 +160,7 @@ public class DayCounterGui
                     false
             );
 
-            milestoneTitleTicks = 100;
+            milestoneTitleTicks = 200;
             lastRecordedDay = currentDay;
         }
     }
@@ -174,7 +175,7 @@ public class DayCounterGui
         GL11.glScalef(xScale, yScale, 1.f);
         Minecraft.getMinecraft().ingameGUI.drawCenteredString(
                 Minecraft.getMinecraft().fontRendererObj,
-                "Day " + lastRecordedDay + " reached",
+                "\u00a7lDay \u00a76\u00a7l" + lastRecordedDay + " \u00a7f\u00a7lreached!",
                 width / (int)(2 * xScale),
                 height / (int)(2 * yScale),
                 color
