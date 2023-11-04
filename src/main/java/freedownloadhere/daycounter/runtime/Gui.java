@@ -1,6 +1,6 @@
-package freedownloadhere.tutorialmod.runtime;
+package freedownloadhere.daycounter.runtime;
 
-import freedownloadhere.tutorialmod.proxy.ClientProxy;
+import freedownloadhere.daycounter.proxy.ClientProxy;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.ChatComponentText;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
@@ -8,14 +8,16 @@ import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+import org.lwjgl.Sys;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.time.Instant;
 import java.util.Scanner;
 
-public class Gui{
-
+public class Gui
+{
     @SubscribeEvent
     public void onWorldJoin(PlayerEvent.PlayerLoggedInEvent event)
     {
@@ -33,14 +35,14 @@ public class Gui{
         }
         catch (FileNotFoundException e)
         {
-
+            System.out.println("A file was not found, so the elapsed seconds were set to 0.\n");
         }
     }
 
     @SubscribeEvent
     public void onWorldExit(PlayerEvent.PlayerLoggedOutEvent event)
     {
-        if(event.player.getName() != Minecraft.getMinecraft().thePlayer.getName())
+        if(!event.player.getName().equals(Minecraft.getMinecraft().thePlayer.getName()))
         {
             System.out.println("Player " + event.player.getName() + " is not " + Minecraft.getMinecraft().thePlayer.getName() + "\n");
             return;
@@ -74,23 +76,34 @@ public class Gui{
 
             if (ClientProxy.keyBindings[1].isPressed())
             {
-                /*secondsElapsed = 0;
+                secondsElapsed = 0;
                 lastMilestone = 0;
+                timeInDays = 0;
                 Minecraft.getMinecraft().thePlayer.addChatComponentMessage(
                         new ChatComponentText("\u00a77The day counter has been \u00a76\u00a7lreset!")
-                );*/
-                secondsElapsed += 120;
+                );
+            }
+
+            if (ClientProxy.keyBindings[2].isPressed())
+            {
+                isPaused = !isPaused;
+                Minecraft.getMinecraft().thePlayer.addChatComponentMessage(
+                        new ChatComponentText("\u00a77The day counter has been " + (isPaused ? "\u00a73\u00a7lpaused" : "\u00a73\u00a7lunpaused") + "!")
+                );
             }
         }
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
-    public void renderGui(RenderGameOverlayEvent.Text event)
+    public void update(RenderGameOverlayEvent.Text event)
     {
         if(Minecraft.getMinecraft().thePlayer == null)
             return;
 
-        calcElapsedTime();
+        if(!isPaused)
+            calcElapsedTime();
+        else
+            lastEpoch = Instant.now().getEpochSecond();
 
         if(showOnScreen)
             displayElapsedTime();
@@ -118,7 +131,8 @@ public class Gui{
                 "\u00a7fTime in days: " +
                 (truncatedTimeInDays - Math.floor(truncatedTimeInDays) == 0 ? "\u00a7a\u00a7l" : "\u00a7l") +
                 truncatedTimeInDays +
-                " days";
+                " days" +
+                (isPaused ? " \u00a73\u00a7l(Paused)" : "");
 
         Minecraft.getMinecraft().fontRendererObj.drawString(timeElapsed, posX, posY, color);
     }
@@ -148,6 +162,7 @@ public class Gui{
 
     private int posX = 10, posY = 10, color = 0xffffff;
     private boolean showOnScreen = true;
+    private boolean isPaused = false;
     private long lastEpoch = 0;
     private long secondsElapsed = 0;
     private long lastMilestone = 0;

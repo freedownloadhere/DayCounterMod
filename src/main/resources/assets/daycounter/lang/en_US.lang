@@ -1,3 +1,4 @@
-key.tutorialmod.togglegui=Toggle GUI
-key.tutorialmod.resettime=Reset Time
-key.categories.tutorialmod.gui=Day Counter Mod
+key.daycounter.togglegui=Toggle GUI
+key.daycounter.resettime=Reset Time
+key.daycounter.pausetime=Pause Time
+key.categories.daycounter.gui=Day Counter Mod

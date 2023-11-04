@@ -1,7 +1,7 @@
-package freedownloadhere.tutorialmod;
+package freedownloadhere.daycounter;
 
-import freedownloadhere.tutorialmod.proxy.CommonProxy;
-import freedownloadhere.tutorialmod.runtime.Gui;
+import freedownloadhere.daycounter.proxy.CommonProxy;
+import freedownloadhere.daycounter.runtime.Gui;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;

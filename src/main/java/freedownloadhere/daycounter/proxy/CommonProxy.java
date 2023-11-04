@@ -1,4 +1,4 @@
-package freedownloadhere.tutorialmod.proxy;
+package freedownloadhere.daycounter.proxy;
 
 public class CommonProxy
 {
