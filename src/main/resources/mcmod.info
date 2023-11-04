@@ -1,0 +1,16 @@
+[
+{
+  "modid": "daycounter",
+  "name": "Day Counter",
+  "description": "A mod that counts the days that have passed, or something.",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["FreeDownloadHere"],
+  "credits": "",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
