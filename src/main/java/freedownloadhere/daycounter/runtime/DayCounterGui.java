@@ -168,9 +168,9 @@ public class DayCounterGui
 
         GL11.glPushMatrix();
         GL11.glScalef(1.5f, 1.5f, 1.f);
-        Minecraft.getMinecraft().fontRendererObj.drawString(currentDay, posX, posY, color);
+        Minecraft.getMinecraft().fontRendererObj.drawStringWithShadow(currentDay, posX, posY, color);
         GL11.glPopMatrix();
-        Minecraft.getMinecraft().fontRendererObj.drawString(extraInfo, posX + 5, posY + 20, color);
+        Minecraft.getMinecraft().fontRendererObj.drawStringWithShadow(extraInfo, posX + 5, posY + 20, color);
     }
 
     private void determineCurrentDay()
@@ -217,7 +217,7 @@ public class DayCounterGui
 
     private int posX = 10, posY = 10, color = 0xffffffff;
     private boolean showOnScreen = true;
-    private boolean isPaused = false, inWorld = false;
+    private boolean isPaused = true, inWorld = false;
     private int secondsElapsed = 0;
     private int lastRecordedDay = 0;
     private String absolutePath;
