@@ -12,7 +12,7 @@ There are a few keybinds that you can set up which affect the day counter:
 - Pause / Unpause Day Counter
 - Reset GUI (Beware that this action has no sort of confirmation!)
 
-You can move the day counter GUI around using the command:
+(CURRENTLY REMOVED) You can move the day counter GUI around using the command:
 
 ```/movedaycountergui x y```
 
