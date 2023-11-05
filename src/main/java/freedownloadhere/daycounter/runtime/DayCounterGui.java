@@ -18,6 +18,13 @@ public class DayCounterGui
 {
     public static DayCounterGui theGui;
 
+    public DayCounterGui()
+    {
+        tickCounters = new int[NUMBER_OF_TICKCOUNTERS];
+        for(int i = 0; i < 5; i++)
+            tickCounters[i] = 0;
+    }
+
     @SubscribeEvent
     public void onWorldJoin(PlayerEvent.PlayerLoggedInEvent event)
     {
@@ -65,34 +72,38 @@ public class DayCounterGui
     {
         if (event.phase == TickEvent.Phase.END)
         {
-            if(!isPaused)
-                tickCounter++;
+            if(!isPaused) tickCounters[TickCounterTypes.time.toInt]++;
+            if(tickCounters[TickCounterTypes.milestone.toInt] > 0) tickCounters[TickCounterTypes.milestone.toInt]--;
+            if(tickCounters[TickCounterTypes.toggle.toInt] > 0) tickCounters[TickCounterTypes.toggle.toInt]--;
+            if(tickCounters[TickCounterTypes.reset.toInt] > 0) tickCounters[TickCounterTypes.reset.toInt]--;
+            if(tickCounters[TickCounterTypes.pause.toInt] > 0) tickCounters[TickCounterTypes.pause.toInt]--;
 
-            if (ClientProxy.keyBindings[0].isPressed())
+            if (ClientProxy.keyBindings[0].isPressed() && tickCounters[TickCounterTypes.toggle.toInt] == 0)
             {
                 showOnScreen = !showOnScreen;
                 Minecraft.getMinecraft().thePlayer.addChatComponentMessage(
                         new ChatComponentText( "\u00a77The day counter GUI has been " + (showOnScreen ? "\u00a7a\u00a7lenabled" : "\u00a7c\u00a7ldisabled") + "!")
                 );
+                tickCounters[TickCounterTypes.toggle.toInt] = 20;
             }
 
-            if (ClientProxy.keyBindings[1].isPressed())
+            if (ClientProxy.keyBindings[1].isPressed() && tickCounters[TickCounterTypes.reset.toInt] == 0)
             {
-                /*secondsElapsed = 0;
-                currentDay = 0;
-                timeInDays = 0;
+                secondsElapsed = 0;
+                lastRecordedDay = 0;
                 Minecraft.getMinecraft().thePlayer.addChatComponentMessage(
                         new ChatComponentText("\u00a77The day counter has been \u00a76\u00a7lreset!")
-                );*/
-                secondsElapsed += 120;
+                );
+                tickCounters[TickCounterTypes.reset.toInt] = 20;
             }
 
-            if (ClientProxy.keyBindings[2].isPressed())
+            if (ClientProxy.keyBindings[2].isPressed() && tickCounters[TickCounterTypes.pause.toInt] == 0)
             {
                 isPaused = !isPaused;
                 Minecraft.getMinecraft().thePlayer.addChatComponentMessage(
                         new ChatComponentText("\u00a77The day counter has been " + (isPaused ? "\u00a73\u00a7lpaused" : "\u00a73\u00a7lunpaused") + "!")
                 );
+                tickCounters[TickCounterTypes.pause.toInt] = 20;
             }
         }
     }
@@ -111,7 +122,7 @@ public class DayCounterGui
 
         determineCurrentDay();
 
-        if(milestoneTitleTicks > 0)
+        if(tickCounters[TickCounterTypes.milestone.toInt] > 0)
             displayMilestoneTitle(
                     event.resolution.getScaledWidth(),
                     event.resolution.getScaledHeight() - 30
@@ -120,10 +131,10 @@ public class DayCounterGui
 
     private void calcElapsedTime()
     {
-        int secondsToAdd = tickCounter / 20;
+        int secondsToAdd = tickCounters[TickCounterTypes.time.toInt] / 20;
         if(secondsToAdd > 0)
         {
-            tickCounter %= 20;
+            tickCounters[TickCounterTypes.time.toInt] %= 20;
             secondsElapsed += secondsToAdd;
         }
     }
@@ -160,15 +171,13 @@ public class DayCounterGui
                     false
             );
 
-            milestoneTitleTicks = 200;
+            tickCounters[TickCounterTypes.milestone.toInt] = 80;
             lastRecordedDay = currentDay;
         }
     }
 
     private void displayMilestoneTitle(int width, int height)
     {
-        milestoneTitleTicks--;
-
         final float xScale = 3.f, yScale = 3.f;
 
         GL11.glPushMatrix();
@@ -196,8 +205,23 @@ public class DayCounterGui
     private int secondsElapsed = 0;
     private int lastRecordedDay = 0;
 
-    private int tickCounter = 0;
-    private int milestoneTitleTicks = 0;
+    private static final int NUMBER_OF_TICKCOUNTERS = 5;
+    private int[] tickCounters;
+    private enum TickCounterTypes
+    {
+        time(0),
+        milestone(1),
+        toggle(2),
+        reset(3),
+        pause(4);
+
+        TickCounterTypes(int toInt)
+        {
+            this.toInt = toInt;
+        }
+
+        final int toInt;
+    }
 
     private static final int DAY_LENGTH_SECONDS = 1200;
 }
