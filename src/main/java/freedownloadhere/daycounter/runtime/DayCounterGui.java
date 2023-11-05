@@ -2,10 +2,13 @@ package freedownloadhere.daycounter.runtime;
 
 import freedownloadhere.daycounter.proxy.ClientProxy;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.network.NetHandlerPlayClient;
 import net.minecraft.util.ChatComponentText;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
+import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.InputEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.lwjgl.opengl.GL11;
@@ -23,95 +26,108 @@ public class DayCounterGui
         tickCounters = new int[NUMBER_OF_TICKCOUNTERS];
         for(int i = 0; i < 5; i++)
             tickCounters[i] = 0;
+        absolutePath = System.getenv("AppData") + "\\.minecraft\\daycounter.txt";
     }
 
-    @SubscribeEvent
-    public void onWorldJoin(PlayerEvent.PlayerLoggedInEvent event)
+    public void onWorldJoin()
     {
-        if(Minecraft.getMinecraft().thePlayer != null)
-            return;
+        inWorld = true;
+        System.out.println("Joined world!");
 
-        System.out.println("Joined the world!\n");
-        try
+        File file = new File(absolutePath);
+        if(!file.exists())
         {
-            File file = new File("daycounter.txt");
-            Scanner fileScan = new Scanner(file);
-            secondsElapsed = fileScan.nextInt();
-            lastRecordedDay = fileScan.nextInt();
-        }
-        catch (FileNotFoundException e)
-        {
-            System.out.println("A file was not found, so the elapsed seconds were set to 0.\n");
-        }
-    }
-
-    @SubscribeEvent
-    public void onWorldExit(PlayerEvent.PlayerLoggedOutEvent event)
-    {
-        if(!event.player.getName().equals(Minecraft.getMinecraft().thePlayer.getName()))
-        {
-            System.out.println("Player " + event.player.getName() + " is not " + Minecraft.getMinecraft().thePlayer.getName() + "\n");
+            System.out.println("Could not find file at " + absolutePath);
             return;
         }
 
-        System.out.println("Left the world!\n");
+        Scanner fileScan;
         try
         {
-            FileWriter writer = new FileWriter("daycounter.txt");
+            fileScan = new Scanner(file);
+        }
+        catch(Exception e)
+        {
+            System.out.println(e.getCause().getMessage());
+            return;
+        }
+
+        secondsElapsed = fileScan.nextInt();
+        lastRecordedDay = fileScan.nextInt();
+    }
+
+    public void onWorldExit()
+    {
+        inWorld = false;
+        System.out.println("Left world!");
+
+        try
+        {
+            FileWriter writer = new FileWriter(absolutePath);
             writer.write(secondsElapsed + " " + lastRecordedDay);
             writer.close();
         }
-        catch(java.io.IOException e)
+        catch(Exception e)
         {
-            System.out.println("Failed to write to file!\n");
+            System.out.println(e.getCause().getMessage());
         }
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onClientTick(TickEvent.ClientTickEvent event)
     {
-        if (event.phase == TickEvent.Phase.END)
+        if (event.phase != TickEvent.Phase.END)
+            return;
+
+        if(!isPaused && inWorld) tickCounters[TickCounterTypes.time.toInt]++;
+        if(tickCounters[TickCounterTypes.milestone.toInt] > 0) tickCounters[TickCounterTypes.milestone.toInt]--;
+        if(tickCounters[TickCounterTypes.toggle.toInt] > 0) tickCounters[TickCounterTypes.toggle.toInt]--;
+        if(tickCounters[TickCounterTypes.reset.toInt] > 0) tickCounters[TickCounterTypes.reset.toInt]--;
+        if(tickCounters[TickCounterTypes.pause.toInt] > 0) tickCounters[TickCounterTypes.pause.toInt]--;
+
+
+        if(Minecraft.getMinecraft().thePlayer != null && !inWorld)
+            onWorldJoin();
+        else if(Minecraft.getMinecraft().thePlayer == null && inWorld)
+            onWorldExit();
+    }
+
+    @SubscribeEvent
+    public void respondToKeypresses(InputEvent.KeyInputEvent event)
+    {
+        if (ClientProxy.keyBindings[0].isPressed() && tickCounters[TickCounterTypes.toggle.toInt] == 0)
         {
-            if(!isPaused) tickCounters[TickCounterTypes.time.toInt]++;
-            if(tickCounters[TickCounterTypes.milestone.toInt] > 0) tickCounters[TickCounterTypes.milestone.toInt]--;
-            if(tickCounters[TickCounterTypes.toggle.toInt] > 0) tickCounters[TickCounterTypes.toggle.toInt]--;
-            if(tickCounters[TickCounterTypes.reset.toInt] > 0) tickCounters[TickCounterTypes.reset.toInt]--;
-            if(tickCounters[TickCounterTypes.pause.toInt] > 0) tickCounters[TickCounterTypes.pause.toInt]--;
+            showOnScreen = !showOnScreen;
+            Minecraft.getMinecraft().thePlayer.addChatComponentMessage(
+                    new ChatComponentText( "\u00a77The day counter GUI has been " + (showOnScreen ? "\u00a7a\u00a7lenabled" : "\u00a7c\u00a7ldisabled") + "!")
+            );
+            tickCounters[TickCounterTypes.toggle.toInt] = 20;
+        }
 
-            if (ClientProxy.keyBindings[0].isPressed() && tickCounters[TickCounterTypes.toggle.toInt] == 0)
-            {
-                showOnScreen = !showOnScreen;
-                Minecraft.getMinecraft().thePlayer.addChatComponentMessage(
-                        new ChatComponentText( "\u00a77The day counter GUI has been " + (showOnScreen ? "\u00a7a\u00a7lenabled" : "\u00a7c\u00a7ldisabled") + "!")
-                );
-                tickCounters[TickCounterTypes.toggle.toInt] = 20;
-            }
+        if (ClientProxy.keyBindings[1].isPressed() && tickCounters[TickCounterTypes.reset.toInt] == 0)
+        {
+            secondsElapsed = 0;
+            lastRecordedDay = 0;
+            Minecraft.getMinecraft().thePlayer.addChatComponentMessage(
+                    new ChatComponentText("\u00a77The day counter has been \u00a76\u00a7lreset!")
+            );
+            tickCounters[TickCounterTypes.reset.toInt] = 20;
+        }
 
-            if (ClientProxy.keyBindings[1].isPressed() && tickCounters[TickCounterTypes.reset.toInt] == 0)
-            {
-                secondsElapsed = 0;
-                lastRecordedDay = 0;
-                Minecraft.getMinecraft().thePlayer.addChatComponentMessage(
-                        new ChatComponentText("\u00a77The day counter has been \u00a76\u00a7lreset!")
-                );
-                tickCounters[TickCounterTypes.reset.toInt] = 20;
-            }
-
-            if (ClientProxy.keyBindings[2].isPressed() && tickCounters[TickCounterTypes.pause.toInt] == 0)
-            {
-                isPaused = !isPaused;
-                Minecraft.getMinecraft().thePlayer.addChatComponentMessage(
-                        new ChatComponentText("\u00a77The day counter has been " + (isPaused ? "\u00a73\u00a7lpaused" : "\u00a73\u00a7lunpaused") + "!")
-                );
-                tickCounters[TickCounterTypes.pause.toInt] = 20;
-            }
+        if (ClientProxy.keyBindings[2].isPressed() && tickCounters[TickCounterTypes.pause.toInt] == 0)
+        {
+            isPaused = !isPaused;
+            Minecraft.getMinecraft().thePlayer.addChatComponentMessage(
+                    new ChatComponentText("\u00a77The day counter has been " + (isPaused ? "\u00a73\u00a7lpaused" : "\u00a73\u00a7lunpaused") + "!")
+            );
+            tickCounters[TickCounterTypes.pause.toInt] = 20;
         }
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void update(RenderGameOverlayEvent.Text event)
     {
-        if(Minecraft.getMinecraft().thePlayer == null)
+        if(!inWorld)
             return;
 
         if(!isPaused)
@@ -120,7 +136,8 @@ public class DayCounterGui
         if(showOnScreen)
             displayElapsedTime();
 
-        determineCurrentDay();
+        if(!isPaused)
+            determineCurrentDay();
 
         if(tickCounters[TickCounterTypes.milestone.toInt] > 0)
             displayMilestoneTitle(
@@ -200,11 +217,10 @@ public class DayCounterGui
 
     private int posX = 10, posY = 10, color = 0xffffffff;
     private boolean showOnScreen = true;
-
-    private boolean isPaused = false;
+    private boolean isPaused = false, inWorld = false;
     private int secondsElapsed = 0;
     private int lastRecordedDay = 0;
-
+    private String absolutePath;
     private static final int NUMBER_OF_TICKCOUNTERS = 5;
     private int[] tickCounters;
     private enum TickCounterTypes
