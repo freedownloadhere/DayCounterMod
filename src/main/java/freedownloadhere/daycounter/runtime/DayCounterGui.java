@@ -2,18 +2,14 @@ package freedownloadhere.daycounter.runtime;
 
 import freedownloadhere.daycounter.proxy.ClientProxy;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.network.NetHandlerPlayClient;
 import net.minecraft.util.ChatComponentText;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
-import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.InputEvent;
-import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.lwjgl.opengl.GL11;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.util.Scanner;
 
@@ -167,10 +163,16 @@ public class DayCounterGui
         String extraInfo = "\u00a7l" + (isPaused ? "\u00a77(Paused) " : "") + displayedMin + ":" + displayedSec;
 
         GL11.glPushMatrix();
+        GL11.glTranslatef(posX, posY, 0.f);
         GL11.glScalef(1.5f, 1.5f, 1.f);
-        Minecraft.getMinecraft().fontRendererObj.drawStringWithShadow(currentDay, posX, posY, color);
+        Minecraft.getMinecraft().fontRendererObj.drawStringWithShadow(currentDay, 0, 0, 0xffffff);
         GL11.glPopMatrix();
-        Minecraft.getMinecraft().fontRendererObj.drawStringWithShadow(extraInfo, posX + 5, posY + 20, color);
+
+        GL11.glPushMatrix();
+        GL11.glTranslatef(posX, posY + 15, 0.f);
+        GL11.glColor3f(0xff / 255.f, 0xff / 255.f, 0xff / 255.f);
+        Minecraft.getMinecraft().fontRendererObj.drawStringWithShadow(extraInfo, 0, 0, 0xffffff);
+        GL11.glPopMatrix();
     }
 
     private void determineCurrentDay()
@@ -195,16 +197,12 @@ public class DayCounterGui
 
     private void displayMilestoneTitle(int width, int height)
     {
-        final float xScale = 3.f, yScale = 3.f;
-
         GL11.glPushMatrix();
-        GL11.glScalef(xScale, yScale, 1.f);
+        GL11.glTranslatef(width, height, 0.f);
+        GL11.glScalef(3.f, 3.f, 1.f);
         Minecraft.getMinecraft().ingameGUI.drawCenteredString(
                 Minecraft.getMinecraft().fontRendererObj,
-                "\u00a7lDay \u00a76\u00a7l" + lastRecordedDay + " \u00a7f\u00a7lreached!",
-                width / (int)(2 * xScale),
-                height / (int)(2 * yScale),
-                color
+                "\u00a7lDay \u00a76\u00a7l" + lastRecordedDay + " \u00a7f\u00a7lreached!", 0, 0, 0xffffff
         );
         GL11.glPopMatrix();
     }
@@ -215,14 +213,14 @@ public class DayCounterGui
         posY = y;
     }
 
-    private int posX = 10, posY = 10, color = 0xffffffff;
+    private int posX = 10, posY = 10;
     private boolean showOnScreen = true;
     private boolean isPaused = true, inWorld = false;
     private int secondsElapsed = 0;
     private int lastRecordedDay = 0;
-    private String absolutePath;
+    private final String absolutePath;
     private static final int NUMBER_OF_TICKCOUNTERS = 5;
-    private int[] tickCounters;
+    private final int[] tickCounters;
     private enum TickCounterTypes
     {
         time(0),
