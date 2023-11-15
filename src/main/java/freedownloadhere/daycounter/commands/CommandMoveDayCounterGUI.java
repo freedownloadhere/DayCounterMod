@@ -1,5 +1,6 @@
-package freedownloadhere.daycounter.runtime;
+package freedownloadhere.daycounter.commands;
 
+import freedownloadhere.daycounter.modules.DayCounterGui;
 import net.minecraft.client.Minecraft;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
@@ -41,7 +42,7 @@ public class CommandMoveDayCounterGUI extends CommandBase
         if (x < 0 || x > Minecraft.getMinecraft().displayWidth || y < 0 || y > Minecraft.getMinecraft().displayHeight)
             throw new CommandException("exception.daycounter.movedaycountergui.illegalargs", new Object[]{args});
 
-        DayCounterGui.theGui.moveGui(x, y);
+        DayCounterGui.moveGui(x, y);
         Minecraft.getMinecraft().thePlayer.addChatComponentMessage(
                 new ChatComponentText("Moved the Day Counter GUI to " + x + " " + y)
         );

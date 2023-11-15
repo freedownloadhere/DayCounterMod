@@ -1,38 +1,37 @@
 package freedownloadhere.daycounter.proxy;
 
-import net.minecraft.client.settings.KeyBinding;
-import net.minecraftforge.fml.client.registry.ClientRegistry;
-import org.lwjgl.input.Keyboard;
+import freedownloadhere.daycounter.config.Keybindings;
+import freedownloadhere.daycounter.config.TickCounter;
+import freedownloadhere.daycounter.modules.DayCounter;
+import freedownloadhere.daycounter.commands.CommandMoveDayCounterGUI;
+import net.minecraftforge.client.ClientCommandHandler;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.common.event.FMLInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 
-public class ClientProxy extends CommonProxy
+public class ClientProxy implements IProxy
 {
-    public static KeyBinding[] keyBindings;
-    public static final int KEYBINDINGS_COUNT = 3;
+    @Override
+    public void preInit(FMLPreInitializationEvent event)
+    {
+        Keybindings.init();
+        TickCounter.init();
+        DayCounter.init();
+        MinecraftForge.EVENT_BUS.register(Keybindings.getInstance());
+        MinecraftForge.EVENT_BUS.register(TickCounter.getInstance());
+        MinecraftForge.EVENT_BUS.register(DayCounter.getInstance());
+    }
 
     @Override
-    public void init()
+    public void init(FMLInitializationEvent event)
     {
-        keyBindings = new KeyBinding[KEYBINDINGS_COUNT];
+        ClientCommandHandler.instance.registerCommand(new CommandMoveDayCounterGUI());
+    }
 
-        keyBindings[0] = new KeyBinding(
-                "key.daycounter.togglegui",
-                Keyboard.KEY_NUMPAD0,
-                "key.categories.daycounter.gui"
-        );
+    @Override
+    public void postInit(FMLPostInitializationEvent event)
+    {
 
-        keyBindings[1] = new KeyBinding(
-                "key.daycounter.resettime",
-                Keyboard.KEY_NUMPAD1,
-                "key.categories.daycounter.gui"
-        );
-        
-        keyBindings[2] = new KeyBinding(
-                "key.daycounter.pausetime",
-                Keyboard.KEY_NUMPAD2,
-                "key.categories.daycounter.gui"
-        );
-
-        for(int i = 0; i < KEYBINDINGS_COUNT; i++)
-            ClientRegistry.registerKeyBinding(keyBindings[i]);
     }
 }
